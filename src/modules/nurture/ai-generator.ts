@@ -37,7 +37,7 @@ export async function generateNurtureMessage(
       CONCERN_TOPICS[context.primaryConcern ?? ""] ?? CONCERN_TOPICS.NOT_SURE;
 
     const response = await ai.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-3-5-haiku-20241022",
       max_tokens: 200,
       system: SYSTEM_PROMPT,
       messages: [

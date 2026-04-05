@@ -30,7 +30,7 @@ describe("generateNurtureMessage", () => {
     const result = await generateNurtureMessage(ctx);
     expect(result).toContain("Priya");
     expect(mockCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ model: "claude-haiku-4-5-20251001" })
+      expect.objectContaining({ model: "claude-3-5-haiku-20241022" })
     );
   });
 

@@ -39,7 +39,8 @@
 - `bcryptjs` + `@types/bcryptjs`
 - `zod` for validation
 - `vitest`, `@vitejs/plugin-react`, `@testing-library/react`, `jsdom`
-- `@anthropic-ai/sdk` (Phase 2)
+- `@anthropic-ai/sdk` (Phase 2+)
+- AI model: `claude-3-5-haiku-20241022` — use for all AI calls (compliance tone check, nurture generation). Do NOT use Sonnet or Opus.
 
 ## Packages to NOT use
 - `@prisma/adapter-neon` — wrong database
