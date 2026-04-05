@@ -12,10 +12,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const output = execSync("npx prisma migrate deploy", {
-      env: { ...process.env },
+    const output = execSync("./node_modules/.bin/prisma migrate deploy", {
+      env: { ...process.env, HOME: "/tmp" },
       timeout: 60000,
       encoding: "utf8",
+      cwd: process.cwd(),
     });
     return NextResponse.json({ ok: true, output });
   } catch (err) {
