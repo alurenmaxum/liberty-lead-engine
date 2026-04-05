@@ -27,6 +27,13 @@ All env vars for this project. Use EXACTLY these names — no aliases.
 ## Anthropic (Phase 2)
 - `ANTHROPIC_API_KEY`
 
+## Rules for setting Vercel env vars
+- **Always use `printf` not `echo`** when piping values to `vercel env add`
+  - ✅ `printf 'value' | vercel env add VAR production --token $VERCEL_TOKEN`
+  - ❌ `echo 'value' | vercel env add ...` — appends `\n`, breaks bcrypt and string comparisons
+- After setting any env var, verify with `vercel env pull --environment production` and check no trailing whitespace
+- For bcrypt hashes: always run `bcrypt.compare('password', hash).then(console.log)` locally before setting
+
 ## Rules for env usage in code
 - Access env vars at RUNTIME (inside functions), never at module scope
 - Always provide a safe fallback or null-guard

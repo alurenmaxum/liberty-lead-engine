@@ -23,6 +23,12 @@ export default async function DashboardLayout({
           <Link href="/dashboard/simulate" className="hover:text-white">
             Simulate
           </Link>
+          <Link href="/dashboard/bot" className="hover:text-white">
+            Bot Control
+          </Link>
+          <Link href="/dashboard/nurture" className="hover:text-white">
+            Nurture
+          </Link>
         </nav>
       </header>
       <main className="p-6">{children}</main>

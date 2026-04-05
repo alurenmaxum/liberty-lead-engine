@@ -40,7 +40,7 @@ export function parseDelay(delay: string): number {
 
 export async function enrollLead(leadId: string, sequenceId: string): Promise<string> {
   const sequence = await db.nurtureSequence.findUniqueOrThrow({ where: { id: sequenceId } });
-  const steps = sequence.steps as NurtureStep[];
+  const steps = sequence.steps as unknown as NurtureStep[];
   const firstDelay = steps.length > 0 ? parseDelay(steps[0].delay) : 0;
 
   const enrollment = await db.nurtureEnrollment.create({
@@ -63,7 +63,7 @@ export async function advanceEnrollment(enrollmentId: string): Promise<void> {
     include: { sequence: true },
   });
 
-  const steps = enrollment.sequence.steps as NurtureStep[];
+  const steps = enrollment.sequence.steps as unknown as NurtureStep[];
   const nextStepIndex = enrollment.currentStep + 1;
 
   if (nextStepIndex >= steps.length) {
@@ -96,7 +96,7 @@ export async function resumeEnrollment(enrollmentId: string): Promise<void> {
     include: { sequence: true },
   });
 
-  const steps = enrollment.sequence.steps as NurtureStep[];
+  const steps = enrollment.sequence.steps as unknown as NurtureStep[];
   const delay = parseDelay(steps[enrollment.currentStep]?.delay ?? "1d");
 
   await db.nurtureEnrollment.update({
