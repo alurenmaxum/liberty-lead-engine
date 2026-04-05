@@ -1,0 +1,221 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// === Enums ===
+
+enum AgeRange {
+  UNDER_28
+  AGE_28_35
+  AGE_36_42
+  AGE_43_50
+  OVER_50
+}
+
+enum EmploymentType {
+  EMPLOYED
+  SELF_EMPLOYED
+  BUSINESS_OWNER
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  COHABITING
+}
+
+enum CoverStatus {
+  YES
+  NO
+  UNSURE
+}
+
+enum PrimaryConcern {
+  LIFE_COVER
+  DISABILITY
+  RETIREMENT
+  INVESTMENT
+  NOT_SURE
+}
+
+enum ContactTime {
+  MORNING
+  AFTERNOON
+  EVENING
+  IMMEDIATE
+}
+
+enum LeadTier {
+  COLD
+  WARM
+  HOT
+}
+
+enum LeadStage {
+  NEW
+  QUALIFYING
+  QUALIFIED
+  NURTURING
+  BOOKING
+  BOOKED
+  CONSULTED
+  CLOSED
+  LOST
+}
+
+enum ConversationStatus {
+  ACTIVE
+  PAUSED
+  CLOSED
+}
+
+enum MessageDirection {
+  IN
+  OUT
+}
+
+enum MessageType {
+  TEXT
+  TEMPLATE
+  INTERACTIVE
+}
+
+enum MessageSource {
+  BOT_SCRIPTED
+  BOT_AI
+  HUMAN
+}
+
+enum ComplianceResult {
+  PASS
+  FLAG
+  BLOCK
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NOSHOW
+}
+
+// === Models ===
+
+model Lead {
+  id                   String              @id @default(uuid())
+  phone                String              @unique
+  firstName            String?
+  lastName             String?
+  email                String?
+  ageRange             AgeRange?
+  employmentType       EmploymentType?
+  maritalStatus        MaritalStatus?
+  hasDependants        Boolean?
+  hasExistingCover     CoverStatus?
+  primaryConcern       PrimaryConcern?
+  isHomeowner          Boolean?
+  preferredContactTime ContactTime?
+  score                Int                 @default(0)
+  tier                 LeadTier            @default(COLD)
+  stage                LeadStage           @default(NEW)
+  source               String?
+  utmCampaign          String?
+  utmMedium            String?
+  consentGiven         Boolean             @default(false)
+  consentAt            DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  conversations        Conversation[]
+  appointments         Appointment[]
+  analyticsEvents      AnalyticsEvent[]
+
+  @@index([tier])
+  @@index([stage])
+  @@index([createdAt])
+}
+
+model Conversation {
+  id          String             @id @default(uuid())
+  leadId      String
+  lead        Lead               @relation(fields: [leadId], references: [id])
+  channel     String             @default("whatsapp")
+  status      ConversationStatus @default(ACTIVE)
+  currentStep String?
+  retryCount  Int                @default(0)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  messages    Message[]
+
+  @@index([leadId])
+}
+
+model Message {
+  id                String           @id @default(uuid())
+  conversationId    String
+  conversation      Conversation     @relation(fields: [conversationId], references: [id])
+  direction         MessageDirection
+  content           String
+  messageType       MessageType      @default(TEXT)
+  source            MessageSource
+  complianceStatus  ComplianceResult?
+  whatsappMessageId String?
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  createdAt         DateTime         @default(now())
+
+  complianceLog     ComplianceLog?
+
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+model ComplianceLog {
+  id        String           @id @default(uuid())
+  messageId String           @unique
+  message   Message          @relation(fields: [messageId], references: [id])
+  checkType String
+  result    ComplianceResult
+  reason    String?
+  checkedAt DateTime         @default(now())
+}
+
+model Appointment {
+  id               String            @id @default(uuid())
+  leadId           String
+  lead             Lead              @relation(fields: [leadId], references: [id])
+  calendlyEventId  String?           @unique
+  scheduledAt      DateTime
+  duration         Int               @default(15)
+  status           AppointmentStatus @default(PENDING)
+  remindersSent    Int               @default(0)
+  briefing         Json?
+  outcome          String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([leadId])
+  @@index([scheduledAt])
+}
+
+model AnalyticsEvent {
+  id         String   @id @default(uuid())
+  leadId     String?
+  lead       Lead?    @relation(fields: [leadId], references: [id])
+  event      String
+  properties Json?
+  campaign   String?
+  timestamp  DateTime @default(now())
+
+  @@index([event])
+  @@index([leadId])
+  @@index([timestamp])
+}

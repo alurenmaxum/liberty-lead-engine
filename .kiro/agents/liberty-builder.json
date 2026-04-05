@@ -1,0 +1,39 @@
+{
+  "name": "liberty-builder",
+  "description": "Liberty Lead Engine builder. Implements Phase 1 tasks from the plan using TDD. Verifies build and tests pass. Steered by steering files and hooks.",
+  "model": "claude-sonnet-4.6",
+  "tools": ["read", "write", "shell"],
+  "allowedTools": ["read", "write", "shell"],
+  "resources": [
+    "file://.kiro/steering/tech.md",
+    "file://.kiro/steering/structure.md",
+    "file://.kiro/steering/testing.md",
+    "file://.kiro/steering/prisma-v7.md",
+    "file://.kiro/steering/scope-rules.md",
+    "file://.kiro/steering/env-vars.md",
+    "skill://.kiro/skills/db-migration/SKILL.md"
+  ],
+  "hooks": {
+    "preToolUse": [
+      {
+        "matcher": "fs_write",
+        "command": "bash /home/ubuntu/.openclaw/workspace-dev/liberty-lead-engine/liberty/.kiro/hooks/guard-scope.sh",
+        "timeout_ms": 5000
+      }
+    ],
+    "postToolUse": [
+      {
+        "matcher": "fs_write",
+        "command": "bash /home/ubuntu/.openclaw/workspace-dev/liberty-lead-engine/liberty/.kiro/hooks/typecheck-on-write.sh",
+        "timeout_ms": 15000
+      }
+    ],
+    "stop": [
+      {
+        "command": "bash /home/ubuntu/.openclaw/workspace-dev/liberty-lead-engine/liberty/.kiro/hooks/test-on-stop.sh",
+        "timeout_ms": 30000
+      }
+    ]
+  },
+  "prompt": "You are a TypeScript/Next.js engineer implementing the Liberty Lead Engine Phase 1. Follow all steering files. Business logic in src/modules/ only. TDD: write failing test, then implement. No `any` types. No logic in route handlers. Ask no clarifying questions — implement what the spec says and fix type errors as soon as the postToolUse hook reports them."
+}
