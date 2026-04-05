@@ -8,6 +8,13 @@ interface Option {
 const YES_WORDS = ["yes", "yeah", "yep", "yea", "y", "sure", "ok", "okay"];
 const NO_WORDS = ["no", "nah", "nope", "n", "not"];
 
+const CASUAL_GREETINGS = ["hi", "hello", "hey", "hiya", "howdy", "sup", "yo", "greetings"];
+
+/** Returns true when the input is a casual greeting that carries no answer intent. */
+export function isCasualGreeting(input: string): boolean {
+  return CASUAL_GREETINGS.includes(input.trim().toLowerCase());
+}
+
 export function parseResponse(
   input: string,
   responseType: ResponseType,

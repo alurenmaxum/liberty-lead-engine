@@ -1,6 +1,6 @@
 import { BotState, STATES, getNextState } from "./states";
-import { parseResponse } from "./parser";
-import { getMessageForState, getRetryMessage } from "./messages";
+import { parseResponse, isCasualGreeting } from "./parser";
+import { getMessageForState, getRetryMessage, getCasualNudgeMessage } from "./messages";
 
 export interface BotContext {
   currentStep: BotState;
@@ -39,6 +39,12 @@ export function processInput(ctx: BotContext, rawInput: string): BotResult {
   const parsed = parseResponse(rawInput, state.responseType, state.options);
 
   if (parsed === null) {
+    // Casual greetings at structured-answer states should not burn a retry
+    if (state.responseType !== "free_text" && isCasualGreeting(rawInput)) {
+      actions.push({ type: "send_message", payload: { body: getCasualNudgeMessage(ctx.currentStep) } });
+      return { nextStep: ctx.currentStep, retryCount: ctx.retryCount, leadData, actions };
+    }
+
     if (ctx.retryCount >= state.maxRetries) {
       actions.push({ type: "send_message", payload: { body: getMessageForState("HUMAN_TAKEOVER") } });
       actions.push({ type: "flag_human", payload: {} });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseResponse } from "@/modules/bot/parser";
+import { parseResponse, isCasualGreeting } from "@/modules/bot/parser";
 
 describe("parseResponse", () => {
   it("parses numbered option '2' to second option id", () => {
@@ -37,5 +37,22 @@ describe("parseResponse", () => {
 
   it("returns null for unrecognized yes/no input", () => {
     expect(parseResponse("maybe", "yes_no")).toBeNull();
+  });
+});
+
+describe("isCasualGreeting", () => {
+  it("identifies common greetings", () => {
+    expect(isCasualGreeting("hi")).toBe(true);
+    expect(isCasualGreeting("Hi")).toBe(true);
+    expect(isCasualGreeting("hello")).toBe(true);
+    expect(isCasualGreeting("hey")).toBe(true);
+    expect(isCasualGreeting("  Hello  ")).toBe(true);
+  });
+
+  it("does not flag substantive input as a greeting", () => {
+    expect(isCasualGreeting("1")).toBe(false);
+    expect(isCasualGreeting("yes")).toBe(false);
+    expect(isCasualGreeting("Priya")).toBe(false);
+    expect(isCasualGreeting("maybe")).toBe(false);
   });
 });

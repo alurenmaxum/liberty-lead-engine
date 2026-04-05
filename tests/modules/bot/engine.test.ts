@@ -32,7 +32,7 @@ describe("Bot Engine — processInput", () => {
   });
 
   it("retries on invalid input", () => {
-    const result = processInput(makeContext({ currentStep: "Q2_AGE" }), "hello");
+    const result = processInput(makeContext({ currentStep: "Q2_AGE" }), "xyz");
     expect(result.nextStep).toBe("Q2_AGE");
     expect(result.retryCount).toBe(1);
     expect(result.actions).toContainEqual(
@@ -41,7 +41,7 @@ describe("Bot Engine — processInput", () => {
   });
 
   it("escalates to human after max retries", () => {
-    const result = processInput(makeContext({ currentStep: "Q2_AGE", retryCount: 2 }), "hello");
+    const result = processInput(makeContext({ currentStep: "Q2_AGE", retryCount: 2 }), "xyz");
     expect(result.nextStep).toBe("HUMAN_TAKEOVER");
   });
 
@@ -65,5 +65,43 @@ describe("Bot Engine — processInput", () => {
     expect(ctx.leadData.hasExistingCover).toBe("NO");
     expect(ctx.leadData.primaryConcern).toBe("DISABILITY");
     expect(ctx.leadData.preferredContactTime).toBe("IMMEDIATE");
+  });
+
+  // Casual greeting resilience
+  it("does NOT increment retryCount when lead sends 'hi' at CONSENT", () => {
+    const result = processInput(makeContext({ currentStep: "CONSENT", retryCount: 0 }), "hi");
+    expect(result.nextStep).toBe("CONSENT");
+    expect(result.retryCount).toBe(0); // retryCount unchanged
+    expect(result.actions).toContainEqual(expect.objectContaining({ type: "send_message" }));
+  });
+
+  it("does NOT trigger HUMAN_TAKEOVER when lead greets twice then answers at CONSENT", () => {
+    // First "hi" — should not burn a retry
+    const r1 = processInput(makeContext({ currentStep: "CONSENT", retryCount: 0 }), "hi");
+    expect(r1.nextStep).toBe("CONSENT");
+    expect(r1.retryCount).toBe(0);
+
+    // Second "hi" — still should not burn a retry
+    const r2 = processInput(makeContext({ currentStep: "CONSENT", retryCount: r1.retryCount }), "hello");
+    expect(r2.nextStep).toBe("CONSENT");
+    expect(r2.retryCount).toBe(0);
+
+    // Now answer "1" — should advance normally
+    const r3 = processInput(makeContext({ currentStep: "CONSENT", retryCount: r2.retryCount }), "1");
+    expect(r3.nextStep).toBe("Q1_NAME");
+  });
+
+  it("does NOT trigger HUMAN_TAKEOVER for casual greeting at Q2_AGE", () => {
+    // retryCount already at max-1 (1), a casual greeting should not push it over
+    const result = processInput(makeContext({ currentStep: "Q2_AGE", retryCount: 1 }), "hey");
+    expect(result.nextStep).toBe("Q2_AGE");
+    expect(result.retryCount).toBe(1); // unchanged
+  });
+
+  it("accepts 'hi' as a valid free_text name at Q1_NAME", () => {
+    // free_text states should still accept any input including greetings
+    const result = processInput(makeContext({ currentStep: "Q1_NAME" }), "hi");
+    expect(result.nextStep).toBe("Q2_AGE");
+    expect(result.leadData.firstName).toBe("hi");
   });
 });

@@ -59,6 +59,11 @@ export function getMessageForState(state: BotState, leadName?: string): string {
   }
 }
 
+export function getCasualNudgeMessage(state: BotState): string {
+  const question = getMessageForState(state);
+  return `Hey there! 👋 Just to keep things moving — ${question}`;
+}
+
 export function getRetryMessage(state: BotState): string {
   switch (state) {
     case "CONSENT":
