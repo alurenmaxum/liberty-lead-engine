@@ -17,6 +17,7 @@ interface MetricsSummary {
   totalAdSpend: number;
   avgCostPerLead: number;
   avgConversionRate: number;
+  daily: { date: string; leadsCreated: number; booked: number; closed: number }[];
 }
 
 interface FunnelStep {
@@ -45,6 +46,7 @@ const defaultMetrics: MetricsSummary = {
   totalAdSpend: 0,
   avgCostPerLead: 0,
   avgConversionRate: 0,
+  daily: [],
 };
 
 export default function AnalyticsPage() {
@@ -95,14 +97,7 @@ export default function AnalyticsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <FunnelChart data={funnel} />
-        <ConversionChart
-          data={funnel.map((f) => ({
-            date: f.event,
-            leadsCreated: f.count,
-            booked: 0,
-            closed: 0,
-          }))}
-        />
+        <ConversionChart data={metrics.daily} />
       </div>
 
       <CampaignTable data={campaigns} />

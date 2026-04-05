@@ -18,41 +18,55 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "DATABASE_URL not set" }, { status: 500 });
   }
 
-  // Read migration SQL bundled at build time
-  const migrationPath = path.join(
-    process.cwd(),
-    "prisma/migrations/20260405000000_phase1_initial_schema/migration.sql"
-  );
-
-  let sql: string;
-  try {
-    sql = fs.readFileSync(migrationPath, "utf8");
-  } catch {
-    return NextResponse.json({ error: "Migration file not found at " + migrationPath }, { status: 500 });
-  }
+  const migrationNames = [
+    "20260405000000_phase1_initial_schema",
+    "20260405144943_phase2_intelligence",
+    "20260405151820_phase3_analytics",
+  ];
 
   const client = new Client({ connectionString: dbUrl, ssl: { rejectUnauthorized: false } });
 
   try {
     await client.connect();
 
-    // Check if tables already exist
-    const check = await client.query(
-      "SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema='public' AND table_name='Lead'"
-    );
-    if (parseInt(check.rows[0].count) > 0) {
-      await client.end();
-      return NextResponse.json({ ok: true, message: "Already migrated — Lead table exists" });
+    const applied: string[] = [];
+    const skipped: string[] = [];
+
+    for (const name of migrationNames) {
+      const migrationPath = path.join(
+        /*turbopackIgnore: true*/ process.cwd(),
+        "prisma",
+        "migrations",
+        name,
+        "migration.sql"
+      );
+
+      let sql: string;
+      try {
+        sql = fs.readFileSync(migrationPath, "utf8");
+      } catch {
+        await client.end();
+        return NextResponse.json({ error: `Migration file not found: ${name}` }, { status: 500 });
+      }
+
+      try {
+        await client.query(sql);
+        applied.push(name);
+      } catch (err) {
+        const msg = (err as Error).message;
+        if (msg.includes("already exists") || msg.includes("duplicate")) {
+          skipped.push(name);
+        } else {
+          await client.end();
+          return NextResponse.json({ ok: false, error: msg, applied, skipped }, { status: 500 });
+        }
+      }
     }
 
-    // Run migration
-    await client.query(sql);
     await client.end();
-
-    return NextResponse.json({ ok: true, message: "Migration applied successfully" });
+    return NextResponse.json({ ok: true, applied, skipped });
   } catch (err) {
     try { await client.end(); } catch { /* ignore */ }
-    const error = err as Error;
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: false, error: (err as Error).message }, { status: 500 });
   }
 }

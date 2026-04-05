@@ -1,6 +1,7 @@
 import { getLeadWithConversation } from "@/lib/pipeline";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { ManualReply } from "@/components/lead-detail/manual-reply";
 
 const TIER_BADGE: Record<string, string> = {
   HOT: "bg-red-900 text-red-300",
@@ -101,6 +102,7 @@ export default async function LeadDetailPage({
               </div>
             ))}
           </div>
+          <ManualReply leadId={lead.id} />
         </div>
       )}
     </div>

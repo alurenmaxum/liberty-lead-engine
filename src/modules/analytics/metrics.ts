@@ -1,5 +1,12 @@
 import { db } from "@/lib/db";
 
+export interface DailyRow {
+  date: string; // ISO date string YYYY-MM-DD
+  leadsCreated: number;
+  booked: number;
+  closed: number;
+}
+
 export interface MetricsSummary {
   leadsCreated: number;
   qualified: number;
@@ -10,11 +17,13 @@ export interface MetricsSummary {
   totalAdSpend: number;
   avgCostPerLead: number;
   avgConversionRate: number;
+  daily: DailyRow[];
 }
 
 export async function getMetricsSummary(from: Date, to: Date): Promise<MetricsSummary> {
   const rows = await db.dailyMetrics.findMany({
     where: { date: { gte: from, lte: to } },
+    orderBy: { date: "asc" },
   });
 
   if (rows.length === 0) {
@@ -28,6 +37,7 @@ export async function getMetricsSummary(from: Date, to: Date): Promise<MetricsSu
       totalAdSpend: 0,
       avgCostPerLead: 0,
       avgConversionRate: 0,
+      daily: [],
     };
   }
 
@@ -51,5 +61,11 @@ export async function getMetricsSummary(from: Date, to: Date): Promise<MetricsSu
       crRows.length === 0
         ? 0
         : crRows.reduce((s, r) => s + Number(r.conversionRate), 0) / crRows.length,
+    daily: rows.map((r) => ({
+      date: r.date.toISOString().slice(0, 10),
+      leadsCreated: r.leadsCreated,
+      booked: r.booked,
+      closed: r.closed,
+    })),
   };
 }
