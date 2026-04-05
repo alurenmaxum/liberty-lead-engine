@@ -290,3 +290,17 @@ model AnalyticsEvent {
   @@index([leadId])
   @@index([timestamp])
 }
+
+model DailyMetrics {
+  date           DateTime @id @db.Date
+  leadsCreated   Int      @default(0)
+  qualified      Int      @default(0)
+  booked         Int      @default(0)
+  consulted      Int      @default(0)
+  closed         Int      @default(0)
+  lost           Int      @default(0)
+  adSpend        Decimal? @db.Decimal(10, 2)
+  costPerLead    Decimal? @db.Decimal(10, 2)
+  conversionRate Decimal? @db.Decimal(5, 4)
+  updatedAt      DateTime @updatedAt
+}

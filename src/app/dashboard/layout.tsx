@@ -29,6 +29,9 @@ export default async function DashboardLayout({
           <Link href="/dashboard/nurture" className="hover:text-white">
             Nurture
           </Link>
+          <Link href="/dashboard/analytics" className="hover:text-white">
+            Analytics
+          </Link>
         </nav>
       </header>
       <main className="p-6">{children}</main>
