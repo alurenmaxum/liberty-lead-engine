@@ -135,6 +135,7 @@ model Lead {
   conversations        Conversation[]
   appointments         Appointment[]
   analyticsEvents      AnalyticsEvent[]
+  nurtureEnrollments   NurtureEnrollment[]
 
   @@index([tier])
   @@index([stage])
@@ -204,6 +205,76 @@ model Appointment {
 
   @@index([leadId])
   @@index([scheduledAt])
+}
+
+// === Phase 2 Enums ===
+
+enum ApprovalStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  EXITED
+}
+
+// === Phase 2 Models ===
+
+model MessageTemplate {
+  id                 String         @id @default(uuid())
+  name               String
+  category           String
+  content            String
+  variables          Json?
+  approvalStatus     ApprovalStatus @default(DRAFT)
+  approvedBy         String?
+  approvedAt         DateTime?
+  whatsappTemplateId String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([approvalStatus])
+  @@index([category])
+}
+
+model NurtureSequence {
+  id        String              @id @default(uuid())
+  name      String
+  trigger   String
+  steps     Json
+  active    Boolean             @default(true)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  enrollments NurtureEnrollment[]
+}
+
+model NurtureEnrollment {
+  id          String           @id @default(uuid())
+  leadId      String
+  lead        Lead             @relation(fields: [leadId], references: [id])
+  sequenceId  String
+  sequence    NurtureSequence  @relation(fields: [sequenceId], references: [id])
+  currentStep Int              @default(0)
+  status      EnrollmentStatus @default(ACTIVE)
+  nextRunAt   DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([status, nextRunAt])
+  @@index([leadId])
+}
+
+model ComplianceConfig {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
 }
 
 model AnalyticsEvent {
