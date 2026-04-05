@@ -100,12 +100,16 @@ export async function processIntake(payload: IntakePayload): Promise<IntakeResul
   // Handle scoring terminal state
   if (result.nextStep === "SCORING") {
     const merged = { ...leadData, ...result.leadData };
+    const responseTimeMinutes = Math.round(
+      (Date.now() - lead.createdAt.getTime()) / 60000
+    );
     const scoreResult = scoreLead({
       hasDependants: merged.hasDependants as boolean | null,
       hasExistingCover: merged.hasExistingCover as string | null,
       employmentType: merged.employmentType as string | null,
       ageRange: merged.ageRange as string | null,
       primaryConcern: merged.primaryConcern as string | null,
+      responseTimeMinutes,
     });
 
     updatedLeadFields.score = scoreResult.score;
