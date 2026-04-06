@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { getNurtureStage, buildNurtureMessage } from "@/modules/nurture/engine";
+import {
+  getNurtureStage,
+  buildNurtureMessage,
+  buildSegmentedNurtureMessage,
+  NurtureLeadContext,
+} from "@/modules/nurture/engine";
 
 describe("getNurtureStage", () => {
   it("returns BOOKING for HOT tier", () => {
@@ -37,8 +42,62 @@ describe("buildNurtureMessage", () => {
     expect(msg.length).toBeGreaterThan(0);
   });
 
-  it("includes concern context when provided", () => {
-    const msg = buildNurtureMessage("Sam", "WARM", "DISABILITY");
-    expect(msg).toContain("disability");
+  it("variant 0 and variant 1 differ for same concern", () => {
+    const v0 = buildNurtureMessage("Sam", "WARM", "DISABILITY", 0);
+    const v1 = buildNurtureMessage("Sam", "WARM", "DISABILITY", 1);
+    expect(v0).not.toBe(v1);
+  });
+
+  it("WARM message contains booking CTA", () => {
+    const msg = buildNurtureMessage("Sam", "WARM", "LIFE_COVER");
+    expect(msg.toLowerCase()).toMatch(/book|call|reply/);
+  });
+
+  it("COLD message does not push hard booking CTA", () => {
+    const msg = buildNurtureMessage("Sam", "COLD", "LIFE_COVER");
+    expect(msg.toLowerCase()).not.toContain("book a");
+  });
+});
+
+describe("buildSegmentedNurtureMessage", () => {
+  it("includes segment line for self-employed lead", () => {
+    const ctx: NurtureLeadContext = {
+      firstName: "Thabo",
+      tier: "WARM",
+      primaryConcern: "DISABILITY",
+      employmentType: "SELF_EMPLOYED",
+    };
+    const msg = buildSegmentedNurtureMessage(ctx);
+    expect(msg).toContain("Thabo");
+    expect(msg.toLowerCase()).toMatch(/self-employed|own income|income/);
+  });
+
+  it("includes dependants segment line when hasDependants is true", () => {
+    const ctx: NurtureLeadContext = {
+      firstName: "Lerato",
+      tier: "WARM",
+      primaryConcern: "LIFE_COVER",
+      hasDependants: true,
+    };
+    const msg = buildSegmentedNurtureMessage(ctx);
+    expect(msg.toLowerCase()).toMatch(/depend/);
+  });
+
+  it("includes no-cover segment line when hasExistingCover is NO", () => {
+    const ctx: NurtureLeadContext = {
+      firstName: "Sam",
+      tier: "COLD",
+      primaryConcern: "NOT_SURE",
+      hasExistingCover: "NO",
+    };
+    const msg = buildSegmentedNurtureMessage(ctx);
+    expect(msg.toLowerCase()).toMatch(/cover/);
+  });
+
+  it("produces different variants", () => {
+    const ctx: NurtureLeadContext = { firstName: "Sam", tier: "WARM", primaryConcern: "RETIREMENT" };
+    const v0 = buildSegmentedNurtureMessage(ctx, 0);
+    const v1 = buildSegmentedNurtureMessage(ctx, 1);
+    expect(v0).not.toBe(v1);
   });
 });

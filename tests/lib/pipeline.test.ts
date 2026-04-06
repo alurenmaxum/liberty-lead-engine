@@ -52,7 +52,7 @@ describe("pipeline integration — pure functions", () => {
 
     const msg = buildNurtureMessage("Bob", "WARM", "RETIREMENT");
     expect(msg).toContain("Bob");
-    expect(msg).toContain("retirement");
+    expect(msg.toLowerCase()).toMatch(/retire|savings/);
   });
 
   it("COLD lead produces cold nurture message", () => {
@@ -60,6 +60,7 @@ describe("pipeline integration — pure functions", () => {
     expect(score.tier).toBe("COLD");
 
     const msg = buildNurtureMessage(null, "COLD", null);
-    expect(msg).toContain("financial planning");
+    expect(msg.length).toBeGreaterThan(0);
+    expect(msg.toLowerCase()).toMatch(/insur|cover|protect|know/);
   });
 });
